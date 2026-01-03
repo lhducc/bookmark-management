@@ -3,6 +3,7 @@ package endpoint
 import (
 	"encoding/json"
 	"github.com/lhducc/bookmark-management/internal/api"
+	redisPkg "github.com/lhducc/bookmark-management/pkg/redis"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -52,11 +53,16 @@ func TestHealthCheckEndpoint(t *testing.T) {
 		panic(err)
 	}
 
+	redisClient, err := redisPkg.NewClient("")
+	if err != nil {
+		panic(err)
+	}
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			app := api.New(cfg)
+			app := api.New(cfg, redisClient)
 			rec := tc.setupTestHTTP(app)
 
 			assert.Equal(t, tc.expectedStatus, rec.Code)

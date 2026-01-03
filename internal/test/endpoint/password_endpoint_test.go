@@ -2,6 +2,7 @@ package endpoint
 
 import (
 	"github.com/lhducc/bookmark-management/internal/api"
+	redisPkg "github.com/lhducc/bookmark-management/pkg/redis"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -38,11 +39,22 @@ func TestPasswordEndpoint(t *testing.T) {
 		},
 	}
 
+	cfg, err := api.NewConfig()
+	if err != nil {
+		panic(err)
+	}
+
+	redisClient, err := redisPkg.NewClient("")
+	if err != nil {
+
+		panic(err)
+	}
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			app := api.New(&api.Config{})
+			app := api.New(cfg, redisClient)
 			rec := tc.setupTestHTTP(app)
 
 			assert.Equal(t, tc.expectedStatus, rec.Code)

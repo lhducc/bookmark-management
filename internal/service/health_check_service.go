@@ -1,13 +1,19 @@
 package service
 
-type healthCheckService struct {
-	serviceName string
-	instanceID  string
-}
+import (
+	"context"
+	"github.com/lhducc/bookmark-management/internal/repository"
+)
 
 //go:generate mockery --name=HealthCheck --filename health_check_service.go
 type HealthCheck interface {
-	Check() (string, string, string)
+	Check(ctx context.Context) (string, string, string, error)
+}
+
+type healthCheckService struct {
+	serviceName string
+	instanceID  string
+	healthCheck repository.HealthCheck
 }
 
 // NewHealthCheck returns a new instance of the healthCheckService, which implements the HealthCheck interface.
@@ -15,10 +21,11 @@ type HealthCheck interface {
 // The returned healthCheckService is used to generate health check responses of the service.
 // It returns a tuple of (message, serviceName, instanceID), where message is "OK" if the service is healthy, serviceName is the name of the service,
 // and instanceID is the ID of the service instance.
-func NewHealthCheck(serviceName, instanceID string) HealthCheck {
+func NewHealthCheck(serviceName, instanceID string, healthCheck repository.HealthCheck) HealthCheck {
 	return &healthCheckService{
 		serviceName: serviceName,
 		instanceID:  instanceID,
+		healthCheck: healthCheck,
 	}
 }
 
@@ -28,6 +35,12 @@ func NewHealthCheck(serviceName, instanceID string) HealthCheck {
 // and instanceID is the ID of the service instance.
 // If an error occurs while generating the health check response, the error is returned immediately and the generated health check response is an empty string.
 // The character set used for generating the health check response is constant and does not change across different implementations of the interface. The length of the generated health check response is constant and does not change across different implementations of the interface.
-func (s *healthCheckService) Check() (string, string, string) {
-	return "OK", s.serviceName, s.instanceID
+func (s *healthCheckService) Check(ctx context.Context) (string, string, string, error) {
+	if s.healthCheck != nil {
+		if err := s.healthCheck.Ping(ctx); err != nil {
+			return "NOT OK", s.serviceName, s.instanceID, err
+		}
+	}
+
+	return "OK", s.serviceName, s.instanceID, nil
 }

@@ -1,0 +1,90 @@
+basePath: /
+definitions:
+  handler.healthCheckResponse:
+    properties:
+      instanceID:
+        type: string
+      message:
+        type: string
+      serviceName:
+        type: string
+    type: object
+  handler.urlShortenRequest:
+    properties:
+      exp:
+        minimum: 0
+        type: integer
+      url:
+        type: string
+    type: object
+  handler.urlShortenResponse:
+    properties:
+      code:
+        type: string
+      message:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API documentation for bookmark service.
+  title: Bookmark Management API
+  version: "1.0"
+paths:
+  /gen-pass:
+    get:
+      description: Generate a new password
+      responses:
+        "200":
+          description: "12345678"
+          schema:
+            type: string
+      summary: Generate a new password
+      tags:
+      - Password
+  /health-check:
+    get:
+      description: Check health of the service
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.healthCheckResponse'
+      summary: Check health of the service
+      tags:
+      - Health Check
+  /shorten-url:
+    post:
+      consumes:
+      - application/json
+      description: Shortens a given URL and returns a shortened URL code.
+      parameters:
+      - description: URL to shorten
+        in: body
+        name: urlShortenRequest
+        required: true
+        schema:
+          $ref: '#/definitions/handler.urlShortenRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handler.urlShortenResponse'
+        "400":
+          description: Bad Request - invalid URL or validation error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Shorten URL
+      tags:
+      - URL Shortener
+swagger: "2.0"
