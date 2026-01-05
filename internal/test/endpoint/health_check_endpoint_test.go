@@ -53,16 +53,11 @@ func TestHealthCheckEndpoint(t *testing.T) {
 		panic(err)
 	}
 
-	redisClient, err := redisPkg.NewClient("")
-	if err != nil {
-		panic(err)
-	}
-
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			app := api.New(cfg, redisClient)
+			app := api.New(cfg, redisPkg.InitMockRedis(t))
 			rec := tc.setupTestHTTP(app)
 
 			assert.Equal(t, tc.expectedStatus, rec.Code)
