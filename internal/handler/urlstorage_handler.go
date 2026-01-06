@@ -7,7 +7,7 @@ import (
 )
 
 type urlShortenRequest struct {
-	Url string `json:"url" biding:"required,url"`
+	Url string `json:"url" binding:"required,url"`
 	Exp int    `json:"exp" binding:"gte=0"`
 }
 

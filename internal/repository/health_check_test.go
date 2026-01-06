@@ -27,6 +27,17 @@ func TestHealthCheck_Ping(t *testing.T) {
 
 			expectErr: nil,
 		},
+		{
+			name: "redis connection error",
+
+			setupMock: func() *redis.Client {
+				mock := redisPkg.InitMockRedis(t)
+				_ = mock.Close()
+				return mock
+			},
+
+			expectErr: redis.ErrClosed,
+		},
 	}
 
 	for _, tc := range testCases {

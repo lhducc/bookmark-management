@@ -102,6 +102,17 @@ func TestUrlStorage_StoreURLIfNotExists(t *testing.T) {
 			expectOK:  false,
 			expectErr: nil,
 		},
+		{
+			name: "redis connection error",
+
+			setupMock: func() *redis.Client {
+				mock := redisPkg.InitMockRedis(t)
+				_ = mock.Close()
+				return mock
+			},
+
+			expectErr: redis.ErrClosed,
+		},
 	}
 
 	for _, tc := range testCases {

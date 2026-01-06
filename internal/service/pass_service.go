@@ -9,8 +9,6 @@ const (
 	passLength = 10
 )
 
-type passwordService struct{}
-
 // Password is an interface that defines the GeneratePassword method.
 // GeneratePassword generates a random password of length passLength, using characters from the character set 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'. The generated password is returned as a string, or an error is returned if there was an issue generating the password.
 // The character set used for generating the password is constant and does not change across different implementations of the interface. The length of the password is also constant and does not change across different implementations of the interface.
@@ -19,6 +17,8 @@ type passwordService struct{}
 type Password interface {
 	GeneratePassword() (string, error)
 }
+
+type passwordService struct{}
 
 // NewPassword returns a new instance of the passwordService, which implements the Password interface.
 // The returned passwordService is used to generate random passwords of length passLength, using characters from the character set 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'.

@@ -52,6 +52,51 @@ func TestUrlStorageHandler_ShortenUrl(t *testing.T) {
 				"code":    "123",
 			},
 		},
+		{
+			name: "serivce error",
+
+			setupRequest: func(ctx *gin.Context) {
+				body := map[string]any{
+					"url": "https://example.com",
+					"exp": 3600,
+				}
+				jsonBody, _ := json.Marshal(body)
+				ctx.Request = httptest.NewRequest(http.MethodPost, "/shorten-url", bytes.NewReader(jsonBody))
+			},
+			setupMockSvc: func(ctx context.Context) *mocks.ShortenUrl {
+				svcMock := mocks.NewShortenUrl(t)
+				svcMock.On("ShortenUrl",
+					ctx,
+					"https://example.com",
+					3600).Return("", assert.AnError)
+				return svcMock
+			},
+
+			expectedStatus: http.StatusInternalServerError,
+			expectedBody: map[string]any{
+				"message": "internal server error",
+			},
+		},
+		{
+			name: "wrong input",
+
+			setupRequest: func(ctx *gin.Context) {
+				body := map[string]any{
+					"url": "",
+					"exp": 3600,
+				}
+				jsonBody, _ := json.Marshal(body)
+				ctx.Request = httptest.NewRequest(http.MethodPost, "/shorten-url", bytes.NewReader(jsonBody))
+			},
+			setupMockSvc: func(ctx context.Context) *mocks.ShortenUrl {
+				return mocks.NewShortenUrl(t)
+			},
+
+			expectedStatus: http.StatusBadRequest,
+			expectedBody: map[string]any{
+				"message": "Invalid request",
+			},
+		},
 	}
 
 	for _, tc := range testCases {

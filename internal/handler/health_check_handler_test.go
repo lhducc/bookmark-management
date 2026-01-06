@@ -1,11 +1,11 @@
 package handler
 
 import (
+	"context"
 	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/lhducc/bookmark-management/internal/service/mocks"
 	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/mock"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -20,7 +20,7 @@ func TestHealthCheckHandler_Check(t *testing.T) {
 		name string
 
 		setupRequest func(ctx *gin.Context)
-		setupMockSvc func(t *testing.T) *mocks.HealthCheck
+		setupMockSvc func(t *testing.T, ctx context.Context) *mocks.HealthCheck
 
 		expectedResponseCode int
 		expectedResponseBody string
@@ -31,9 +31,9 @@ func TestHealthCheckHandler_Check(t *testing.T) {
 			setupRequest: func(ctx *gin.Context) {
 				ctx.Request = httptest.NewRequest(http.MethodGet, "/health_check", nil)
 			},
-			setupMockSvc: func(t *testing.T) *mocks.HealthCheck {
+			setupMockSvc: func(t *testing.T, ctx context.Context) *mocks.HealthCheck {
 				mockSvc := mocks.NewHealthCheck(t)
-				mockSvc.On("Check", mock.Anything).Return("OK", "bookmark-management", "2025", nil)
+				mockSvc.On("Check", ctx).Return("OK", "bookmark-management", "2025", nil)
 				return mockSvc
 			},
 
@@ -46,9 +46,9 @@ func TestHealthCheckHandler_Check(t *testing.T) {
 			setupRequest: func(ctx *gin.Context) {
 				ctx.Request = httptest.NewRequest(http.MethodGet, "/health_check", nil)
 			},
-			setupMockSvc: func(t *testing.T) *mocks.HealthCheck {
+			setupMockSvc: func(t *testing.T, ctx context.Context) *mocks.HealthCheck {
 				mockSvc := mocks.NewHealthCheck(t)
-				mockSvc.On("Check", mock.Anything).Return("NOT OK", "bookmark-management", "2025", testConnectError)
+				mockSvc.On("Check", ctx).Return("NOT OK", "bookmark-management", "2025", testConnectError)
 				return mockSvc
 			},
 
@@ -64,7 +64,7 @@ func TestHealthCheckHandler_Check(t *testing.T) {
 			rec := httptest.NewRecorder()
 			gc, _ := gin.CreateTestContext(rec)
 			tc.setupRequest(gc)
-			mockSvc := tc.setupMockSvc(t)
+			mockSvc := tc.setupMockSvc(t, gc)
 			testHandler := NewHealthCheckHandler(mockSvc)
 			testHandler.Check(gc)
 

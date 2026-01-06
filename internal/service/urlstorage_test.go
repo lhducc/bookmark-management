@@ -18,7 +18,7 @@ func TestShortenUrl(t *testing.T) {
 		url string
 		exp int
 
-		setupMock func(t *testing.T) repository.UrlStorage
+		setupMock func(t *testing.T, ctx context.Context, url string, exp int) repository.UrlStorage
 
 		expectErr   error
 		expectedLen int
@@ -29,14 +29,14 @@ func TestShortenUrl(t *testing.T) {
 			url: "https://www.google.com",
 			exp: 10,
 
-			setupMock: func(t *testing.T) repository.UrlStorage {
+			setupMock: func(t *testing.T, ctx context.Context, url string, exp int) repository.UrlStorage {
 				repoMock := mocks.NewUrlStorage(t)
 				repoMock.On(
 					"StoreURLIfNotExists",
-					mock.Anything,
+					ctx,
 					mock.AnythingOfType("string"),
-					mock.Anything,
-					mock.Anything,
+					url,
+					exp,
 				).Return(true, nil)
 				return repoMock
 			},
@@ -52,7 +52,7 @@ func TestShortenUrl(t *testing.T) {
 
 			cxt := context.Background()
 
-			urlStorageMock := tc.setupMock(t)
+			urlStorageMock := tc.setupMock(t, cxt, tc.url, tc.exp)
 
 			testSvc := NewShortenUrl(urlStorageMock)
 

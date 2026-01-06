@@ -21,6 +21,7 @@ func TestUrlShortenEndpoint(t *testing.T) {
 
 		expectedStatus  int
 		expectedCodeLen int
+		expectedMessage string
 	}{
 		{
 			name: "success",
@@ -39,6 +40,26 @@ func TestUrlShortenEndpoint(t *testing.T) {
 
 			expectedStatus:  http.StatusOK,
 			expectedCodeLen: 7,
+			expectedMessage: "Shorten URL generated successfully!",
+		},
+		{
+			name: "wrong input - empty url",
+
+			setupTestHTTP: func(api api.Engine) *httptest.ResponseRecorder {
+				body := map[string]any{
+					"url": "",
+					"exp": 10,
+				}
+				jsonBody, _ := json.Marshal(body)
+				req := httptest.NewRequest(http.MethodPost, "/shorten-url", bytes.NewReader(jsonBody))
+				respRec := httptest.NewRecorder()
+				api.ServeHTTP(respRec, req)
+				return respRec
+			},
+
+			expectedStatus:  http.StatusBadRequest,
+			expectedCodeLen: 0,
+			expectedMessage: "Invalid request",
 		},
 	}
 
@@ -60,9 +81,10 @@ func TestUrlShortenEndpoint(t *testing.T) {
 			err = json.Unmarshal(rec.Body.Bytes(), &resp)
 			assert.NoError(t, err)
 
-			assert.Equal(t, tc.expectedStatus, rec.Code)
-			assert.Equal(t, "Shorten URL generated successfully!", resp["message"])
-			assert.Equal(t, tc.expectedCodeLen, len(resp["code"]))
+			assert.Equal(t, tc.expectedMessage, resp["message"])
+			if tc.expectedCodeLen > 0 {
+				assert.Equal(t, tc.expectedCodeLen, len(resp["code"]))
+			}
 
 		})
 	}

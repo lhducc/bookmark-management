@@ -12,6 +12,8 @@ const (
 	maxRetry      = 5
 )
 
+var errShortenURLFailed = errors.New("failed to shorten URL")
+
 //go:generate mockery --name ShortenUrl --filename urlstorage.go
 type ShortenUrl interface {
 	ShortenUrl(ctx context.Context, url string, exp int) (string, error)
@@ -47,5 +49,5 @@ func (s *shortenUrl) ShortenUrl(ctx context.Context, url string, exp int) (strin
 			return urlCode, nil
 		}
 	}
-	return "", errors.New("failed to shorten URL")
+	return "", errShortenURLFailed
 }
