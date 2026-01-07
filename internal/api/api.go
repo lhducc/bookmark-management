@@ -70,7 +70,7 @@ func (a *api) registerEP() {
 	// Router
 	a.app.GET("/gen-pass", passHandler.GenPass)
 	a.app.GET("/health-check", healthCheckHandler.Check)
-	a.app.POST("/shorten-url", urlShortenHandler.ShortenUrl)
+	a.app.POST("/v1/links/shorten", urlShortenHandler.ShortenUrl)
 
 	// Swagger
 	a.app.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

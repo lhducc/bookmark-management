@@ -32,7 +32,7 @@ func TestUrlShortenEndpoint(t *testing.T) {
 					"exp": 10,
 				}
 				jsonBody, _ := json.Marshal(body)
-				req := httptest.NewRequest(http.MethodPost, "/shorten-url", bytes.NewReader(jsonBody))
+				req := httptest.NewRequest(http.MethodPost, "/v1/links/shorten", bytes.NewReader(jsonBody))
 				respRec := httptest.NewRecorder()
 				api.ServeHTTP(respRec, req)
 				return respRec
@@ -51,7 +51,7 @@ func TestUrlShortenEndpoint(t *testing.T) {
 					"exp": 10,
 				}
 				jsonBody, _ := json.Marshal(body)
-				req := httptest.NewRequest(http.MethodPost, "/shorten-url", bytes.NewReader(jsonBody))
+				req := httptest.NewRequest(http.MethodPost, "/v1/links/shorten", bytes.NewReader(jsonBody))
 				respRec := httptest.NewRecorder()
 				api.ServeHTTP(respRec, req)
 				return respRec

@@ -35,7 +35,7 @@ func TestUrlStorageHandler_ShortenUrl(t *testing.T) {
 					"exp": 3600,
 				}
 				jsonBody, _ := json.Marshal(body)
-				ctx.Request = httptest.NewRequest(http.MethodPost, "/shorten-url", bytes.NewReader(jsonBody))
+				ctx.Request = httptest.NewRequest(http.MethodPost, "/v1/links/shorten", bytes.NewReader(jsonBody))
 			},
 			setupMockSvc: func(ctx context.Context) *mocks.ShortenUrl {
 				svcMock := mocks.NewShortenUrl(t)
@@ -61,7 +61,7 @@ func TestUrlStorageHandler_ShortenUrl(t *testing.T) {
 					"exp": 3600,
 				}
 				jsonBody, _ := json.Marshal(body)
-				ctx.Request = httptest.NewRequest(http.MethodPost, "/shorten-url", bytes.NewReader(jsonBody))
+				ctx.Request = httptest.NewRequest(http.MethodPost, "/v1/links/shorten", bytes.NewReader(jsonBody))
 			},
 			setupMockSvc: func(ctx context.Context) *mocks.ShortenUrl {
 				svcMock := mocks.NewShortenUrl(t)
@@ -86,7 +86,7 @@ func TestUrlStorageHandler_ShortenUrl(t *testing.T) {
 					"exp": 3600,
 				}
 				jsonBody, _ := json.Marshal(body)
-				ctx.Request = httptest.NewRequest(http.MethodPost, "/shorten-url", bytes.NewReader(jsonBody))
+				ctx.Request = httptest.NewRequest(http.MethodPost, "/v1/links/shorten", bytes.NewReader(jsonBody))
 			},
 			setupMockSvc: func(ctx context.Context) *mocks.ShortenUrl {
 				return mocks.NewShortenUrl(t)

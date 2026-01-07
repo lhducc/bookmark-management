@@ -38,16 +38,11 @@ func TestPasswordEndpoint(t *testing.T) {
 		},
 	}
 
-	cfg, err := api.NewConfig()
-	if err != nil {
-		panic(err)
-	}
-
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			app := api.New(cfg, nil)
+			app := api.New(&api.Config{}, nil)
 			rec := tc.setupTestHTTP(app)
 
 			assert.Equal(t, tc.expectedStatus, rec.Code)
