@@ -1,6 +1,5 @@
 # Go
 /bin/
-/pkg/
 *.exe
 *.test
 *.out
@@ -8,3 +7,30 @@
 # GoLand / JetBrains
 .idea/
 *.iml
+
+# env file
+.env
+
+# Coverage reports
+*.cover
+coverage.html
+coverage.txt
+
+# Build outputs
+/bin/
+/build/
+/dist/
+
+# Temporary files
+*.tmp
+tmp/
+temp/
+
+# Local config overrides
+*.local.yaml
+*.local.yml
+config.local.*
+
+/data/
+/redis
+coverage.*

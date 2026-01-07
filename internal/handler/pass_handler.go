@@ -24,10 +24,12 @@ func NewPassword(svc service.Password) Password {
 	}
 }
 
-// GenPass handles a GET request to generate a random password.
-// It returns a random password of length 10, using characters from the character set 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'.
-// If an error occurs while generating the password, it returns an HTTP 500 error with the message 'err'.
-// Otherwise, it returns an HTTP 200 OK response with the generated password as a string.
+// GenPass generates a new password
+// @Summary Generate a new password
+// @Description Generate a new password
+// @Tags Password
+// @Success 200 {object} string "12345678"
+// @Router /gen-pass [get]
 func (h *passwordHandler) GenPass(c *gin.Context) {
 	pass, err := h.svc.GeneratePassword()
 	if err != nil {

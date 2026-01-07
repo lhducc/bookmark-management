@@ -1,6 +1,8 @@
 package handler
 
 import (
+	"context"
+	"errors"
 	"github.com/gin-gonic/gin"
 	"github.com/lhducc/bookmark-management/internal/service/mocks"
 	"github.com/stretchr/testify/assert"
@@ -9,6 +11,8 @@ import (
 	"testing"
 )
 
+var testConnectError = errors.New("can't connect to redis")
+
 func TestHealthCheckHandler_Check(t *testing.T) {
 	t.Parallel()
 
@@ -16,7 +20,7 @@ func TestHealthCheckHandler_Check(t *testing.T) {
 		name string
 
 		setupRequest func(ctx *gin.Context)
-		setupMockSvc func(t *testing.T) *mocks.HealthCheck
+		setupMockSvc func(t *testing.T, ctx context.Context) *mocks.HealthCheck
 
 		expectedResponseCode int
 		expectedResponseBody string
@@ -27,14 +31,29 @@ func TestHealthCheckHandler_Check(t *testing.T) {
 			setupRequest: func(ctx *gin.Context) {
 				ctx.Request = httptest.NewRequest(http.MethodGet, "/health_check", nil)
 			},
-			setupMockSvc: func(t *testing.T) *mocks.HealthCheck {
+			setupMockSvc: func(t *testing.T, ctx context.Context) *mocks.HealthCheck {
 				mockSvc := mocks.NewHealthCheck(t)
-				mockSvc.On("Check").Return("OK", "bookmark-management", "2025")
+				mockSvc.On("Check", ctx).Return("OK", "bookmark-management", "2025", nil)
 				return mockSvc
 			},
 
 			expectedResponseCode: http.StatusOK,
 			expectedResponseBody: `{"message":"OK","serviceName":"bookmark-management","instanceID":"2025"}`,
+		},
+		{
+			name: "error case",
+
+			setupRequest: func(ctx *gin.Context) {
+				ctx.Request = httptest.NewRequest(http.MethodGet, "/health_check", nil)
+			},
+			setupMockSvc: func(t *testing.T, ctx context.Context) *mocks.HealthCheck {
+				mockSvc := mocks.NewHealthCheck(t)
+				mockSvc.On("Check", ctx).Return("NOT OK", "bookmark-management", "2025", testConnectError)
+				return mockSvc
+			},
+
+			expectedResponseCode: http.StatusServiceUnavailable,
+			expectedResponseBody: `{"error":"Internal Server Error","message":"NOT OK","service_name":"bookmark-management","instance_id":"2025"}`,
 		},
 	}
 
@@ -45,7 +64,7 @@ func TestHealthCheckHandler_Check(t *testing.T) {
 			rec := httptest.NewRecorder()
 			gc, _ := gin.CreateTestContext(rec)
 			tc.setupRequest(gc)
-			mockSvc := tc.setupMockSvc(t)
+			mockSvc := tc.setupMockSvc(t, gc)
 			testHandler := NewHealthCheckHandler(mockSvc)
 			testHandler.Check(gc)
 
