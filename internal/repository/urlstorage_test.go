@@ -131,3 +131,74 @@ func TestUrlStorage_StoreURLIfNotExists(t *testing.T) {
 		})
 	}
 }
+
+func TestUrlStorage_GetURL(t *testing.T) {
+	t.Parallel()
+
+	testCases := []struct {
+		name string
+
+		code string
+		url  string
+
+		setupMock func() *redis.Client
+
+		expectedErr error
+	}{
+		{
+			name: "normal case",
+
+			code: "ABC1234",
+			url:  "https://google.com",
+
+			setupMock: func() *redis.Client {
+				mock := redisPkg.InitMockRedis(t)
+				err := mock.Set(context.Background(), "ABC1234", "https://google.com", time.Hour).Err()
+				require.NoError(t, err)
+				return mock
+			},
+
+			expectedErr: nil,
+		},
+		{
+			name: "key not found",
+
+			setupMock: func() *redis.Client {
+				mock := redisPkg.InitMockRedis(t)
+				return mock
+			},
+
+			code:        "404",
+			url:         "",
+			expectedErr: redis.Nil,
+		},
+		{
+			name: "redis connection error",
+
+			setupMock: func() *redis.Client {
+				mock := redisPkg.InitMockRedis(t)
+				_ = mock.Close()
+				return mock
+			},
+
+			code:        "123",
+			url:         "",
+			expectedErr: redis.ErrClosed,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			t.Parallel()
+			ctx := t.Context()
+
+			redisMock := tc.setupMock()
+			testRepo := NewUrlStorage(redisMock)
+
+			url, err := testRepo.GetURL(ctx, tc.code)
+
+			assert.Equal(t, tc.expectedErr, err)
+			assert.Equal(t, tc.url, url)
+		})
+	}
+}

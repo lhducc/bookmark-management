@@ -7,6 +7,7 @@ import (
 	"github.com/lhducc/bookmark-management/internal/handler"
 	"github.com/lhducc/bookmark-management/internal/repository"
 	"github.com/lhducc/bookmark-management/internal/service"
+	"github.com/lhducc/bookmark-management/pkg/stringutils"
 	"github.com/redis/go-redis/v9"
 	swaggerFiles "github.com/swaggo/files"
 	ginSwagger "github.com/swaggo/gin-swagger"
@@ -60,7 +61,7 @@ func (a *api) registerEP() {
 	// Service
 	passSvc := service.NewPassword()
 	healthCheckSvc := service.NewHealthCheck(a.cfg.ServiceName, a.cfg.InstanceID, healthCheckRepo)
-	urlShortenSvc := service.NewShortenUrl(urlRepo)
+	urlShortenSvc := service.NewShortenUrl(urlRepo, stringutils.NewKeyGen())
 
 	// Handler
 	passHandler := handler.NewPassword(passSvc)
@@ -70,7 +71,11 @@ func (a *api) registerEP() {
 	// Router
 	a.app.GET("/gen-pass", passHandler.GenPass)
 	a.app.GET("/health-check", healthCheckHandler.Check)
-	a.app.POST("/v1/links/shorten", urlShortenHandler.ShortenUrl)
+	v1Routers := a.app.Group("/v1")
+	{
+		v1Routers.POST("/links/shorten", urlShortenHandler.ShortenUrl)
+		v1Routers.GET("/links/redirect/:code", urlShortenHandler.GetUrl)
+	}
 
 	// Swagger
 	a.app.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))

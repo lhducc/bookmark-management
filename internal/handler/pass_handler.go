@@ -3,6 +3,7 @@ package handler
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/lhducc/bookmark-management/internal/service"
+	"github.com/rs/zerolog/log"
 	"net/http"
 )
 
@@ -33,6 +34,7 @@ func NewPassword(svc service.Password) Password {
 func (h *passwordHandler) GenPass(c *gin.Context) {
 	pass, err := h.svc.GeneratePassword()
 	if err != nil {
+		log.Error().Err(err).Msg("Service return error on GenPass")
 		c.String(http.StatusInternalServerError, "err")
 		return
 	}

@@ -10,6 +10,22 @@ const (
 	charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
 )
 
+type KeyGen interface {
+	GenerateCode(length int) (string, error)
+}
+
+type keyGen struct {
+}
+
+//go:generate mockery --name KeyGen --filename keygen.go
+func NewKeyGen() KeyGen {
+	return &keyGen{}
+}
+
+func (k *keyGen) GenerateCode(length int) (string, error) {
+	return GenerateCode(length)
+}
+
 // GenerateCode generates a random string of the given length, using characters from the character set 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'.
 // The generated code is returned as a string, or an error is returned if there was an issue generating the code.
 // The character set used for generating the code is constant and does not change across different implementations of the interface.
