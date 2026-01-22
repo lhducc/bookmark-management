@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/lhducc/bookmark-management/internal/repository"
 	"github.com/lhducc/bookmark-management/pkg/stringutils"
+	"github.com/redis/go-redis/v9"
 )
 
 const (
@@ -17,14 +18,16 @@ var errShortenURLFailed = errors.New("failed to shorten URL")
 //go:generate mockery --name ShortenUrl --filename urlstorage.go
 type ShortenUrl interface {
 	ShortenUrl(ctx context.Context, url string, exp int) (string, error)
+	GetUrl(cxt context.Context, urlCode string) (string, error)
 }
 
 type shortenUrl struct {
-	repo repository.UrlStorage
+	repo   repository.UrlStorage
+	keyGen stringutils.KeyGen
 }
 
-func NewShortenUrl(repo repository.UrlStorage) ShortenUrl {
-	return &shortenUrl{repo: repo}
+func NewShortenUrl(repo repository.UrlStorage, keyGen stringutils.KeyGen) ShortenUrl {
+	return &shortenUrl{repo: repo, keyGen: keyGen}
 }
 
 // ShortenUrl shortens a given URL and returns a shortened URL code.
@@ -35,7 +38,7 @@ func NewShortenUrl(repo repository.UrlStorage) ShortenUrl {
 // The URL code is case-sensitive and can be used to retrieve the original URL from the repository.
 func (s *shortenUrl) ShortenUrl(ctx context.Context, url string, exp int) (string, error) {
 	for i := 0; i < maxRetry; i++ {
-		urlCode, err := stringutils.GenerateCode(urlCodeLength)
+		urlCode, err := s.keyGen.GenerateCode(urlCodeLength)
 		if err != nil {
 			return "", err
 		}
@@ -50,4 +53,14 @@ func (s *shortenUrl) ShortenUrl(ctx context.Context, url string, exp int) (strin
 		}
 	}
 	return "", errShortenURLFailed
+}
+
+var ErrCodeNotFound = errors.New("code not found")
+
+func (s *shortenUrl) GetUrl(ctx context.Context, urlCode string) (string, error) {
+	url, err := s.repo.GetURL(ctx, urlCode)
+	if errors.Is(err, redis.Nil) {
+		return "", ErrCodeNotFound
+	}
+	return url, err
 }

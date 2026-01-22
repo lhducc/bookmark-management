@@ -12,10 +12,13 @@ definitions:
   handler.urlShortenRequest:
     properties:
       exp:
-        minimum: 0
+        minimum: 604800
         type: integer
       url:
         type: string
+    required:
+    - exp
+    - url
     type: object
   handler.urlShortenResponse:
     properties:
@@ -53,7 +56,33 @@ paths:
       summary: Check health of the service
       tags:
       - Health Check
-  /shorten-url:
+  /v1/links/redirect/{code}:
+    get:
+      consumes:
+      - application/json
+      description: Get URL by code
+      parameters:
+      - description: Url code
+        format: string
+        in: path
+        name: code
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "302":
+          description: Found
+        "400":
+          description: Bad Request - invalid URL or validation error
+        "404":
+          description: URL not found
+        "500":
+          description: Internal Server Error
+      summary: Get URL
+      tags:
+      - URL Shortener
+  /v1/links/shorten:
     post:
       consumes:
       - application/json

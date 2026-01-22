@@ -3,6 +3,7 @@ package handler
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/lhducc/bookmark-management/internal/service"
+	"github.com/rs/zerolog/log"
 	"net/http"
 )
 
@@ -41,6 +42,7 @@ func NewHealthCheckHandler(svc service.HealthCheck) HealthCheckHandler {
 func (h *healthCheckHandler) Check(c *gin.Context) {
 	message, serviceName, instanceID, err := h.svc.Check(c)
 	if err != nil {
+		log.Error().Err(err).Msg("Service return error on Check")
 		c.JSON(http.StatusServiceUnavailable, healthCheckErrorResponse{
 			Error:       "Internal Server Error",
 			Message:     message,

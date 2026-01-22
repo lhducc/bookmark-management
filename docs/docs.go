@@ -49,7 +49,46 @@ const docTemplate = `{
                 }
             }
         },
-        "/shorten-url": {
+        "/v1/links/redirect/{code}": {
+            "get": {
+                "description": "Get URL by code",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "URL Shortener"
+                ],
+                "summary": "Get URL",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "string",
+                        "description": "Url code",
+                        "name": "code",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "302": {
+                        "description": "Found"
+                    },
+                    "400": {
+                        "description": "Bad Request - invalid URL or validation error"
+                    },
+                    "404": {
+                        "description": "URL not found"
+                    },
+                    "500": {
+                        "description": "Internal Server Error"
+                    }
+                }
+            }
+        },
+        "/v1/links/shorten": {
             "post": {
                 "description": "Shortens a given URL and returns a shortened URL code.",
                 "consumes": [
@@ -119,10 +158,14 @@ const docTemplate = `{
         },
         "handler.urlShortenRequest": {
             "type": "object",
+            "required": [
+                "exp",
+                "url"
+            ],
             "properties": {
                 "exp": {
                     "type": "integer",
-                    "minimum": 0
+                    "minimum": 604800
                 },
                 "url": {
                     "type": "string"
