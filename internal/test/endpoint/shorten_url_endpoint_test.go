@@ -2,15 +2,17 @@ package endpoint
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
-	"fmt"
 	"github.com/lhducc/bookmark-management/internal/api"
 	redisPkg "github.com/lhducc/bookmark-management/pkg/redis"
+	"github.com/redis/go-redis/v9"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 func TestUrlShortenEndpoint(t *testing.T) {
@@ -95,13 +97,10 @@ func TestUrlShortenEndpoint(t *testing.T) {
 func TestUrlRedirectEndpoint(t *testing.T) {
 	t.Parallel()
 
-	type shortenResp struct {
-		Message string `json:"message"`
-		Code    string `json:"code"`
-	}
-
 	testCases := []struct {
 		name string
+
+		setupCache func(ctx context.Context) *redis.Client
 
 		setupTestHTTP func(app api.Engine) *httptest.ResponseRecorder
 
@@ -112,28 +111,18 @@ func TestUrlRedirectEndpoint(t *testing.T) {
 		{
 			name: "success redirect",
 
-			setupTestHTTP: func(app api.Engine) *httptest.ResponseRecorder {
-				body := map[string]any{
-					"url": "https://google.com",
-					"exp": 604800,
-				}
-				jsonBody, _ := json.Marshal(body)
-				req := httptest.NewRequest(http.MethodPost, "/v1/links/shorten", bytes.NewReader(jsonBody))
-				req.Header.Set("Content-Type", "application/json")
-
-				shortenRec := httptest.NewRecorder()
-				app.ServeHTTP(shortenRec, req)
-				require.Equal(t, http.StatusOK, shortenRec.Code)
-
-				var sr shortenResp
-				err := json.Unmarshal(shortenRec.Body.Bytes(), &sr)
+			setupCache: func(ctx context.Context) *redis.Client {
+				mock := redisPkg.InitMockRedis(t)
+				err := mock.Set(ctx, "1234567", "https://google.com", 300*time.Second).Err()
 				require.NoError(t, err)
-				require.NotEmpty(t, sr.Code)
+				return mock
+			},
 
-				redirectReq := httptest.NewRequest(http.MethodGet, fmt.Sprintf("/v1/links/redirect/%s", sr.Code), nil)
-				redirectRec := httptest.NewRecorder()
-				app.ServeHTTP(redirectRec, redirectReq)
-				return redirectRec
+			setupTestHTTP: func(app api.Engine) *httptest.ResponseRecorder {
+				req := httptest.NewRequest(http.MethodGet, "/v1/links/redirect/1234567", nil)
+				rec := httptest.NewRecorder()
+				app.ServeHTTP(rec, req)
+				return rec
 			},
 
 			expectedStatus:   http.StatusFound,
@@ -141,6 +130,10 @@ func TestUrlRedirectEndpoint(t *testing.T) {
 		},
 		{
 			name: "not found",
+
+			setupCache: func(ctx context.Context) *redis.Client {
+				return redisPkg.InitMockRedis(t)
+			},
 
 			setupTestHTTP: func(app api.Engine) *httptest.ResponseRecorder {
 				req := httptest.NewRequest(http.MethodGet, "/v1/links/redirect/notfound", nil)
@@ -163,7 +156,11 @@ func TestUrlRedirectEndpoint(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			app := api.New(cfg, redisPkg.InitMockRedis(t))
+			ctx := context.Background()
+
+			redisClient := tc.setupCache(ctx)
+			app := api.New(cfg, redisClient)
+
 			rec := tc.setupTestHTTP(app)
 
 			assert.Equal(t, tc.expectedStatus, rec.Code)
@@ -173,7 +170,6 @@ func TestUrlRedirectEndpoint(t *testing.T) {
 				return
 			}
 
-			// JSON response cases
 			if tc.expectedMessage != "" {
 				var resp map[string]string
 				err := json.Unmarshal(rec.Body.Bytes(), &resp)
@@ -182,5 +178,4 @@ func TestUrlRedirectEndpoint(t *testing.T) {
 			}
 		})
 	}
-
 }
